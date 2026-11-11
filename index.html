@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stoolball</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="sub">SUSSEX &middot; MIXED LEAGUE &middot; TUESDAY EVENING</div>
+    <h1>Stool<em>ball</em></h1>
+    <p class="tagline">A full innings on placeholder figures. You bat; they bowl, keep and field. Every figure on screen is drawn from the sprite list, so what you see here is what the batch run has to produce.</p>
+  </header>
+
+  <section id="setup">
+    <fieldset>
+      <legend>HOW LONG AN INNINGS</legend>
+      <div class="choices" id="lengths"></div>
+    </fieldset>
+    <div class="how">
+      <h3>HOW TO BAT</h3>
+      <ol>
+        <li>Move the pointer <b>up and down</b> over the pitch to raise and lower the bat. Up/Down arrows work too. Facing, it rests at <b>board height</b>.</li>
+        <li><b>Press</b> (click, tap, Space) to swing at that height. One swing per ball.</li>
+        <li>Once it is hit into the field, <b>press to run</b>. Press again while running to <b>call for another</b>. The throw comes in from the right to whichever end you are in trouble at.</li>
+        <li>Short of your ground when the board is hit, and you are <b>run out</b>. Overs alternate between women and men bowlers.</li>
+      </ol>
+    </div>
+    <div class="row">
+      <button id="btn-start" class="primary" type="button">Bat</button>
+      <button id="btn-sheet" type="button">Sprite list</button>
+    </div>
+  </section>
+
+  <section id="match" hidden>
+    <div class="hud" id="hud"></div>
+    <div id="stage"><canvas id="screen" width="320" height="180" aria-label="Stoolball pitch, side on"></canvas></div>
+    <div class="call" id="call"></div>
+    <div class="book"><span class="lab">THIS OVER</span><div class="balls" id="balls"></div></div>
+    <div class="row">
+      <button id="btn-act" class="primary" type="button">Swing</button>
+      <button id="btn-card" type="button">Scorecard</button>
+      <button id="btn-quit" type="button">Declare</button>
+    </div>
+  </section>
+
+  <section id="card" hidden>
+    <div class="done-inner">
+      <h2 id="card-title">Scorecard</h2>
+      <div class="figs" id="card-figs"></div>
+      <div class="scroll"><table id="card-bat"></table></div>
+      <p class="verdict" id="card-extra"></p>
+      <div class="scroll"><table id="card-bowl"></table></div>
+      <div class="row">
+        <button id="btn-back" class="primary" type="button">Back</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="sheet" hidden>
+    <div class="done-inner">
+      <h2>Sprite list</h2>
+      <p class="verdict" id="sheet-sum"></p>
+      <div id="sheet-body"></div>
+      <div class="row"><button id="btn-sheet-back" class="primary" type="button">Back</button></div>
+    </div>
+  </section>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

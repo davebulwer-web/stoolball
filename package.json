@@ -1,0 +1,11 @@
+{
+  "name": "stoolball",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8765",
+    "test": "node --test test/*.test.mjs",
+    "sprites": "node tools/sprite-list.mjs",
+    "check-sprites": "node tools/check-sprites.cjs"
+  }
+}
