@@ -6,7 +6,8 @@ import {
   W, H, GROUND, PXI, PXX, BW_SX, PITCH, REL_SX, FAR_SX, RUNUP, BOARD_LO, BOARD_HI, NOBALL_H,
   BAT_LO, BAT_HI, ZONE_MID, sy, KEEPER_SX, UMPIRE_SX, STRIKER_POS, NONSTRIKER_POS, BOWLER_FAR_SX, sxFromFar,
 } from './geometry.js';
-import { makeDelivery, ballH, ballXW, swingAt, shotFromContact, classifyShot, fieldingPlan, keeperPlan, GATHER, BREAK, KEEPER_RUN } from './physics.js';
+import { makeDelivery, ballH, ballXW, swingAt, shotFromContact, classifyShot, GATHER, BREAK } from './physics.js';
+import { planShot, chaserAt, FIELDERS, KEEPER_SPOT, BOWLER_SPOT, NEAR_WICKET, FAR_WICKET } from './fielding.js';
 import * as RUN from './running.js';
 import { ANIM, REST_BAND } from './sprites.js';
 import { drawChar, drawBall, drawWicket, guardFrame, swingKey } from './placeholder.js';
@@ -107,11 +108,10 @@ export function createGame(ctx, opts = {}) {
     if (cls.kind === 'field' && cls.dribble) {
       const v0 = 160 + shot.q * 200;
       S.ball = { mode: 'free', xw: xw0, h: c.h, vx: v0, vy: 20, stopAt: cls.reach, spin: 0 };
-      play.plan = keeperPlan(cls.reach, KEEPER_IN);
     } else {
       S.ball = { mode: 'free', xw: xw0, h: c.h, vx: shot.vxh, vy: shot.vyh, spin: 0 };
-      if (cls.kind === 'field') play.plan = fieldingPlan(cls.reach, rng);
     }
+    play.plan = planShot(cls, shot, rng);
     S.cards[S.striker].balls += isExtra() ? 0 : 1;
     setPhase('play');
     S.msg = { text: cls.kind === 'field' ? (cls.dribble ? 'Dribbled out in front of the keeper.' : 'Hit into the field.') : 'In the air!',
@@ -459,12 +459,12 @@ export function createGame(ctx, opts = {}) {
     drawBackdrop(ctx);
     const sinceHit = e => S.hits[e] >= 0 ? Math.floor((S.clock - S.hitT[e]) / 0.12) : -1;
     const hf = e => { const f = sinceHit(e); return f >= 0 && f < 6 ? (f < 2 ? 0 : 1) : -1; };
-    drawWicket(ctx, FAR_SX, GROUND, 'far', hf('far'));
-    if (S.phase === 'idle') return;
+    if (S.phase === 'idle') { drawWicket(ctx, FAR_SX, GROUND, 'far', -1); return; }
 
-    // umpire
+    // umpire, standing behind the far wicket
     const sig = currentSignal();
     drawActor(S.umpire, 'UMP', sig || 'ump_idle', UMPIRE_SX, null);
+    drawWicket(ctx, FAR_SX, GROUND, 'far', hf('far'));
 
     // far end first
     S.R.runners.filter(r => !r.hidden && sxFromFar(r.pos) < W / 2).forEach(r => drawBatter(r));
@@ -479,6 +479,58 @@ export function createGame(ctx, opts = {}) {
 
     drawTheBall();
     drawGauge();
+    drawMap();
+  }
+
+  // ------------------------------------------------------------------ field map
+  // Top-down inset: where the fielders are, where the ball went, who is
+  // chasing it and which end the throw is going to.
+  function drawMap() {
+    const bx = 206, by = 2, bw = 112, bh = 82;
+    const cx = bx + bw / 2, cy = by + bh / 2, sc = 38 / 1250, mid = -PITCH / 2;
+    const P = (p) => [Math.round(cx + (p.x - mid) * sc), Math.round(cy + p.y * sc * 0.92)];
+    const dot = (p, c, sz = 2) => { const [x, y] = P(p); ctx.fillStyle = c; ctx.fillRect(x - (sz >> 1), y - (sz >> 1), sz, sz); };
+    ctx.fillStyle = 'rgba(16,23,26,.72)'; ctx.fillRect(bx, by, bw, bh);
+    ctx.fillStyle = '#3e5a36';
+    const R = 1250 * sc;
+    for (let a = 0; a < 360; a += 3) {
+      const r = a * Math.PI / 180;
+      ctx.fillRect(Math.round(cx + Math.cos(r) * R), Math.round(cy + Math.sin(r) * R * 0.92), 1, 1);
+    }
+    const [nx, ny] = P(NEAR_WICKET), [fx] = P(FAR_WICKET);
+    ctx.fillStyle = '#6b7f52'; ctx.fillRect(fx, ny - 1, nx - fx + 1, 3);
+
+    const Pl = S.play, plan = Pl && Pl.plan;
+    const t = Pl ? Pl.t : 0;
+    // which end the throw is going to
+    if (Pl && Pl.end) {
+      const flash = Math.floor(S.clock * 8) % 2;
+      dot(Pl.end === 'near' ? NEAR_WICKET : FAR_WICKET, flash ? '#e0705a' : '#e7dcc0', 4);
+    }
+    dot(NEAR_WICKET, '#e7dcc0', 2); dot(FAR_WICKET, '#b3a684', 2);
+
+    // fielders, keeper, bowler
+    FIELDERS.forEach((f, i) => {
+      const chasing = plan && plan.fielder === i;
+      dot(chasing ? chaserAt(plan, t) : f, chasing ? '#ffb199' : '#e0705a', 3);
+    });
+    const keeperPos = plan && plan.keeper ? chaserAt(plan, Math.min(t, plan.tGather)) : KEEPER_SPOT;
+    dot(keeperPos, plan && plan.keeper ? '#ffb199' : '#e0705a', 3);
+    dot(Pl && S.bowler.x <= BOWLER_FAR_SX + 1 ? { x: -PITCH - 15, y: 8 } : BOWLER_SPOT, '#e0705a', 3);
+
+    // batters
+    for (const r of S.R.runners) if (!r.hidden && r.state !== 'out') dot({ x: r.pos - PITCH, y: -20 }, '#e8b14b', 3);
+
+    // the ball
+    if (plan) {
+      let b;
+      if (Pl.end && Pl.tCatch != null && t >= plan.tGather + 0.3) {
+        const to = Pl.end === 'near' ? NEAR_WICKET : FAR_WICKET;
+        const u = Math.min(1, (t - plan.tGather - 0.3) / Math.max(0.05, Pl.tCatch - plan.tGather - 0.3));
+        b = { x: plan.intercept.x + (to.x - plan.intercept.x) * u, y: plan.intercept.y + (to.y - plan.intercept.y) * u };
+      } else b = plan.ballAt(Math.min(t, plan.tGather));
+      dot(b, '#ffffff', 3);
+    }
   }
 
   function frameOf(a) {

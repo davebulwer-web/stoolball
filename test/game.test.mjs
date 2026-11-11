@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as RUN from '../src/running.js';
-import { makeDelivery, ballH, shotFromContact, classifyShot, fieldingPlan } from '../src/physics.js';
+import { makeDelivery, ballH, shotFromContact, classifyShot } from '../src/physics.js';
+import { planShot, chaserAt, FIELDERS } from '../src/fielding.js';
 import { ANIMS, MODELS, PLAYERS } from '../src/sprites.js';
 import { poseFor, guardFrame, swingKey } from '../src/placeholder.js';
 import { BOARD_LO, BOARD_HI, PITCH } from '../src/geometry.js';
@@ -53,12 +54,23 @@ test('locking after the ball is gathered cancels a call not yet acted on', () =>
   assert.equal(RUN.call(R), null);
 });
 
-test('a short push is safe for one but a second is a run-out at the near end', () => {
-  const rng = () => 0.5;
-  const plan = fieldingPlan(500, rng);
-  const one = 0.25 + (PITCH - 30 - 36 - 30) / RUN.SPEED;
-  assert.ok(plan.tArrive.far > one, 'single is safe');
-  assert.ok(plan.tArrive.near < one * 2 + RUN.TURN, 'two is not');
+test('the nearest fielder cuts off a ground ball and the throw times follow', () => {
+  const seq = [0.5, 0.9, 0.5];
+  let k = 0;
+  const plan = planShot({ kind: 'field', reach: 900 }, {}, () => seq[k++ % seq.length]);
+  assert.equal(plan.kind, 'ground');
+  assert.ok(plan.fielder >= 0 && plan.fielder < FIELDERS.length);
+  assert.ok(Math.hypot(plan.intercept.x, plan.intercept.y) <= 900 + 1e-6);
+  assert.ok(plan.tArrive.near > plan.tGather && plan.tArrive.far > plan.tGather);
+  const end = chaserAt(plan, plan.tGather);
+  assert.ok(Math.hypot(end.x - plan.intercept.x, end.y - plan.intercept.y) < 1);
+});
+
+test('on average, a harder hit takes longer to get back', () => {
+  let seed = 7;
+  const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const avg = reach => { let s = 0; for (let i = 0; i < 300; i++) s += planShot({ kind: 'field', reach }, {}, rng).tGather; return s / 300; };
+  assert.ok(avg(1100) > avg(300) + 0.3);
 });
 
 test('shot outcomes cover every kind', () => {

@@ -46,7 +46,7 @@ w('');
 w('| Figure | Height | Figure height on canvas | Used for |');
 w('|---|---|---|---|');
 for (const [k, m] of Object.entries(MODELS)) {
-  const uses = m.kind === 'umpire' ? 'the umpire at the bowler\'s end' : 'batters, bowlers and fielders (each player recoloured)' + (k === 'M67' ? '; also the keeper' : '');
+  const uses = m.kind === 'umpire' ? 'the umpire, standing behind the far wicket' : 'batters, bowlers and fielders (each player recoloured)' + (k === 'M67' ? '; also the keeper' : '');
   w(`| ${k} | ${m.label} | ${m.px}px | ${uses} |`);
 }
 w('');

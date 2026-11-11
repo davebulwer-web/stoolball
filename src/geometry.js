@@ -29,7 +29,7 @@ export const sxFromFar = pos => FAR_SX + pos * PXX;     // runner position, meas
 
 // where people stand
 export const KEEPER_SX = 288;
-export const UMPIRE_SX = REL_SX - 22;
+export const UMPIRE_SX = FAR_SX - 13;   // behind the far wicket
 export const STRIKER_POS = PITCH - 30;    // 30in in front of the batting wicket
 export const NONSTRIKER_POS = 30;         // 30in in front of the far wicket
 export const BOWLER_FAR_SX = FAR_SX + 10; // where the bowler takes a throw at the far end

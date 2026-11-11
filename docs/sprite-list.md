@@ -38,7 +38,7 @@ Every animation here is drawn during a placeholder innings, and nothing is drawn
 | W67 | Woman, 5ft 7in | 50px | batters, bowlers and fielders (each player recoloured) |
 | M67 | Man, 5ft 7in | 50px | batters, bowlers and fielders (each player recoloured); also the keeper |
 | M73 | Man, 6ft 1in | 55px | batters, bowlers and fielders (each player recoloured) |
-| UMP | Umpire, 5ft 6in | 50px | the umpire at the bowler's end |
+| UMP | Umpire, 5ft 6in | 50px | the umpire, standing behind the far wicket |
 
 Eleven players a side are made from the four player bodies by recolouring. The opposition attack uses all four bodies (overs alternate woman, man), so every body needs the bowling set as well as the batting set.
 
@@ -431,6 +431,7 @@ Six: both arms straight up.
 | Piece | Size | Notes |
 |---|---|---|
 | `backdrop` | 320x180 | Dusk sky, low sun upper left, hedge line, outfield, the pitch strip and both creases. No wickets or people. Probably drawn by hand rather than generated. |
+| `field_map` | 112x82 | Top-down field map in the top-right of the sky: boundary, pitch, fielders, batters and the ball. Drawn in code from dots; nothing to generate. |
 
 ## Frame count by figure
 

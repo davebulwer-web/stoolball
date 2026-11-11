@@ -61,29 +61,6 @@ export function classifyShot(sh, rng = Math.random) {
   return { kind: 'field', reach };
 }
 
-// ---------------------------------------------------------------------------
-// Fielding. The hit goes away behind the batter (screen right). A fielder off
-// screen chases it down and throws to one end or the other.
-
+// Throw timing; where the fielders are and who gets to the ball is in fielding.js.
 export const THROW_WINDUP = 0.4, GATHER = 0.15, BREAK = 0.22;
 
-export function fieldingPlan(reach, rng = Math.random) {
-  const theta = (20 + rng() * 140) * Math.PI / 180;   // angle off the line of the pitch
-  const fx = reach * Math.cos(theta), fy = reach * Math.sin(theta);
-  const dNear = reach;
-  const dFar = Math.hypot(fx + PITCH, fy);
-  const tGather = 0.8 + reach / 700 + rng() * 0.3;
-  const speed = 850 + rng() * 150;
-  return { reach, tGather, speed,
-    tArrive: { near: tGather + THROW_WINDUP + dNear / speed, far: tGather + THROW_WINDUP + dFar / speed } };
-}
-
-// The keeper fields a dribble himself: run to it, scoop it, then throw to the
-// far end or run it back to his own wicket.
-export const KEEPER_RUN = 200, PICKUP = 0.4;
-export function keeperPlan(reach, keeperIn) {
-  const run = Math.abs(reach - keeperIn) / KEEPER_RUN;
-  const tGather = 0.25 + run + PICKUP;
-  return { reach, keeper: true, tGather, speed: 800,
-    tArrive: { far: tGather + 0.3 + (PITCH + reach) / 800, near: tGather + reach / KEEPER_RUN } };
-}
