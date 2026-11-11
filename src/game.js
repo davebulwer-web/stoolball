@@ -151,13 +151,17 @@ export function createGame(ctx, opts = {}) {
     const xw0 = ballXW(S.d, S.t) - GEO.DIST;     // inches from the batting wicket
     const play = { shot, cls, t: 0, plan: null, end: null, tCatch: null, caught: false, attempt: null, outcome: null };
     S.play = play;
+    play.plan = planShot(cls, shot, rng);
     if (cls.kind === 'field' && cls.dribble) {
       const v0 = 160 + shot.q * 200;
       S.ball = { mode: 'free', xw: xw0, h: c.h, vx: v0, vy: 20, stopAt: cls.reach, spin: 0 };
     } else {
-      S.ball = { mode: 'free', xw: xw0, h: c.h, vx: shot.vxh, vy: shot.vyh, spin: 0 };
+      // Along the pitch the ball follows the plan, the same path the field map
+      // shows, so a drive in front of square heads back past the bowler and a
+      // shot square of the wicket barely moves across the screen. The height
+      // still comes from the hit itself.
+      S.ball = { mode: 'shot', x0: xw0, h: c.h, vy: shot.vyh };
     }
-    play.plan = planShot(cls, shot, rng);
     S.cards[S.striker].balls += isExtra() ? 0 : 1;
     setPhase('play');
     S.msg = { text: cls.kind === 'field' ? (cls.dribble ? 'Dribbled out in front of the keeper.' : 'Hit into the field.') : 'In the air!',
@@ -210,11 +214,17 @@ export function createGame(ctx, opts = {}) {
       P.tCatch = plan.tArrive[P.end];
       if (plan.keeper) S.ball = { mode: 'held' };
       else S.ball = { mode: 'hidden' };
+      const fx = Math.max(EDGE_L - 10, Math.min(EDGE_R + 10, BW_SX + plan.intercept.x * PXX));
+      const inView = fx > 0 && fx < W;
       if (!plan.keeper || P.end === 'far') {
-        const from = plan.keeper ? { x: BW_SX + plan.reach * PXX, h: 30 } : { x: EDGE_R + 10, h: P.end === 'far' ? 110 : 70 };
+        // the throw comes in from where the ball was fielded, or from off the
+        // edge of the screen on that side when it was fielded out of view;
+        // a ball fielded in view lies there until it is thrown
+        const from = plan.keeper ? { x: BW_SX + plan.reach * PXX, h: 30 }
+          : { x: fx, h: inView ? 40 : P.end === 'far' ? 110 : 70 };
         const to = P.end === 'near' ? { x: KEEPER_SX - 4, h: 40 } : { x: BOWLER_FAR_SX + 3, h: 40 };
         const visible = Math.min(P.tCatch - P.t, Math.abs(from.x - to.x) / PXX / plan.speed + (plan.keeper ? 0.3 : 0));
-        S.ball = { mode: 'arc', from, to, t0: P.tCatch - visible, dur: visible, apex: P.end === 'far' ? 40 : 10, wait: true };
+        S.ball = { mode: 'arc', from, to, t0: P.tCatch - visible, dur: visible, apex: P.end === 'far' ? 40 : 10, wait: true, rest: !plan.keeper && inView };
       }
     }
     if (P.end && !P.caught && P.t >= P.tCatch) {
@@ -522,6 +532,9 @@ export function createGame(ctx, opts = {}) {
         }
       }
       if (b.toKeeper && b.xw >= KEEPER_IN) S.ball = { mode: 'held', keeperTook: S.clock };
+    } else if (b.mode === 'shot') {
+      b.h += b.vy * dt; b.vy -= GEO.G * dt;
+      if (b.h <= 0) { b.h = 0; b.vy = Math.abs(b.vy) > 40 ? -b.vy * 0.35 : 0; }
     } else if (b.mode === 'arc') {
       const now = b.clock ? S.clock : S.play ? S.play.t : 0;
       if (b.clock && now >= b.t0 + b.dur) S.ball = { mode: 'held' };
@@ -709,6 +722,18 @@ export function createGame(ctx, opts = {}) {
     drawChar(ctx, p.model, key, frameOf(k), x, GROUND, p.look);
   }
 
+  // Inches from the batting wicket along the pitch (+ behind the batter) of a
+  // struck ball: the plan's path, starting from where the bat met it.
+  function shotX(b) {
+    const P = S.play, t = P ? P.t : 0;
+    const p = P && P.plan ? P.plan.ballAt(Math.min(t, P.plan.tGather)) : { x: 0 };
+    return p.x + b.x0 * Math.max(0, 1 - t / 0.3);
+  }
+  function shotMoving() {
+    const P = S.play, plan = P.plan;
+    return P.t < (plan.tIntercept != null ? plan.tIntercept : plan.tGather);
+  }
+
   function drawTheBall() {
     const b = S.ball;
     if (!b) return;
@@ -720,9 +745,13 @@ export function createGame(ctx, opts = {}) {
     } else if (b.mode === 'free') {
       const x = BW_SX + b.xw * PXX, y = sy(b.h);
       if (x > -10 && x < W + 10 && y > -10) drawBall(ctx, Math.round(x), Math.round(y), b.vx ? spin : 0);
+    } else if (b.mode === 'shot') {
+      const x = BW_SX + shotX(b) * PXX, y = sy(b.h);
+      if (x > -10 && x < W + 10 && y > -10) drawBall(ctx, Math.round(x), Math.round(y), S.play && shotMoving() ? spin : 0);
     } else if (b.mode === 'arc') {
       const now = b.clock ? S.clock : S.play ? S.play.t : 0;
       const u = (now - b.t0) / b.dur;
+      if (u < 0 && b.rest) return drawBall(ctx, Math.round(b.from.x), Math.round(sy(0)), 0);
       if (u < 0 || u > 1) return;
       const x = b.from.x + (b.to.x - b.from.x) * u;
       const h = b.from.h + (b.to.h - b.from.h) * u + b.apex * 4 * u * (1 - u);
