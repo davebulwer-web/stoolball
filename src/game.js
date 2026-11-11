@@ -1,17 +1,19 @@
-// A batting innings. You bat; the computer bowls,
-// keeps wicket and fields. Overs alternate between women and men bowlers.
+// One innings. Either you bat and the computer bowls, keeps and fields, or
+// you bowl (and choose where the throws go) while the computer bats and runs.
+// Overs alternate between women and men bowlers.
 
 import * as GEO from './geometry.js';
 import {
   W, H, GROUND, PXI, PXX, BW_SX, PITCH, REL_SX, FAR_SX, RUNUP, BOARD_LO, BOARD_HI, NOBALL_H,
   BAT_LO, BAT_HI, ZONE_MID, sy, KEEPER_SX, UMPIRE_SX, STRIKER_POS, NONSTRIKER_POS, BOWLER_FAR_SX, sxFromFar,
 } from './geometry.js';
-import { makeDelivery, ballH, ballXW, swingAt, shotFromContact, classifyShot, GATHER, BREAK } from './physics.js';
+import { makeDelivery, ballH, ballXW, swingAt, shotFromContact, classifyShot, GATHER, BREAK, LOB_VX } from './physics.js';
 import { planShot, chaserAt, FIELDERS, KEEPER_SPOT, BOWLER_SPOT, NEAR_WICKET, FAR_WICKET } from './fielding.js';
 import * as RUN from './running.js';
 import { ANIM, REST_BAND } from './sprites.js';
 import { drawChar, drawBall, drawWicket, guardFrame, swingKey } from './placeholder.js';
 import { homeSide, awaySide, attack, KEEPER_INDEX } from './teams.js';
+import * as AI from './bowling.js';
 
 const BALLS_PER_OVER = 8;
 const KEEPER_IN = (KEEPER_SX - BW_SX) / PXX;          // keeper stands this far behind the wicket, in
@@ -27,16 +29,21 @@ export function createGame(ctx, opts = {}) {
   const emit = () => S.listeners.forEach(f => f(S));
 
   // ------------------------------------------------------------------ setup
-  function newInnings(overs) {
-    const home = homeSide(), away = awaySide();
+  // o.human: 'bat' (you bat, the default) or 'bowl' (you bowl and field).
+  // o.batting / o.fielding: the two sides; o.target: runs needed to win.
+  function newInnings(overs, o = {}) {
+    const human = o.human || 'bat';
+    const batting = o.batting || (human === 'bat' ? homeSide() : awaySide());
+    const fielding = o.fielding || (human === 'bat' ? awaySide() : homeSide());
     Object.assign(S, {
-      overs, home, away,
-      keeper: away[KEEPER_INDEX],
-      attack: attack(away).map(b => ({ ...b, balls: 0, runs: 0, wkts: 0, overRuns: 0, maidens: 0 })),
-      cards: home.map(p => ({ p, runs: 0, balls: 0, how: null, fours: 0, sixes: 0, in: false })),
+      overs, human, batting, fielding, target: o.target || null,
+      keeper: fielding[KEEPER_INDEX],
+      attack: attack(fielding).map(b => ({ ...b, balls: 0, runs: 0, wkts: 0, overRuns: 0, maidens: 0 })),
+      cards: batting.map((p, i) => ({ p, runs: 0, balls: 0, how: null, fours: 0, sixes: 0, in: false, mind: AI.newMind(p, i) })),
+      pace: 0, power: null, aimH: null, aimLive: null, throwTo: 'near', aiBat: null, endWhy: null, shownCard: false,
       total: 0, wkts: 0, extras: 0, over: 0, legal: 0, book: [], fow: [],
       striker: 0, nonStriker: 1, nextIn: 2, bowlerIdx: 0,
-      walkers: [], ball: null, play: null, result: null, swing: null, msg: null,
+      walkers: [], ball: { mode: 'held' }, play: null, result: null, swing: null, msg: null,
       bowler: { x: MARK.long, key: 'bowl_ready', t0: 0 },
       keeperA: { x: KEEPER_SX, key: 'keep_ready', t0: 0 },
       umpire: { key: 'ump_idle', t0: 0 },
@@ -51,17 +58,21 @@ export function createGame(ctx, opts = {}) {
     ];
     S.d = chooseDelivery();
     setPhase('between');
-    S.msg = { text: 'The openers walk out.', sub: `${S.home[0].name} and ${S.home[1].name}. ${currentBowler().p.name} to bowl.` };
+    S.msg = { text: 'The openers walk out.', sub: `${S.batting[0].name} and ${S.batting[1].name}. ${currentBowler().p.name} to bowl.` };
   }
 
   const currentBowler = () => S.attack[S.bowlerIdx];
-  const player = id => S.home[id];
+  const player = id => S.batting[id];
+  const bowling = () => S.human === 'bowl';
+  const pron = (id = S.striker) => player(id).model[0] === 'W'
+    ? { she: 'she', She: 'She', him: 'her' } : { she: 'he', She: 'He', him: 'him' };
   const wideLine = () => player(S.striker).heightIn + 6;
 
   function setPhase(p) { S.phase = p; S.t = 0; emit(); }
   function hideRunner(id) { const r = S.R.runners.find(r => r.id === id); if (r) r.hidden = true; }
 
   function chooseDelivery() {
+    if (bowling()) return null;   // you choose it, with the two bars
     const st = currentBowler().style;
     const u = rng();
     const kind = u < st.mix[0] ? 'quick' : u < st.mix[0] + st.mix[1] ? 'slower' : 'donkey';
@@ -76,9 +87,10 @@ export function createGame(ctx, opts = {}) {
   }
 
   // ------------------------------------------------------------------ input
-  function setBat(h) { S.batH = Math.max(BAT_LO, Math.min(BAT_HI, h)); }
+  function setBat(h) { if (S.human === 'bowl') return; S.batH = Math.max(BAT_LO, Math.min(BAT_HI, h)); }
 
   function press() {
+    if (bowling()) return pressBowling();
     if (S.phase === 'flight') return swing();
     if (S.phase === 'play') {
       const r = RUN.call(S.R);
@@ -89,6 +101,39 @@ export function createGame(ctx, opts = {}) {
     if (S.phase === 'between' && S.t > 0.2) return skipBetween();
     if (S.phase === 'overEnd' && S.t > 0.3) return startOver();
     return null;
+  }
+
+  // Bowling: the first press sets the pace off the power bar, the second
+  // (during the run-up) lets it go at the height the marker is at. While the
+  // ball is in the field a press switches which end the throw goes to.
+  function pressBowling() {
+    if (S.phase === 'aim') return lockPower();
+    if (S.phase === 'runup' && S.aimH == null) { S.aimH = AI.liveAim(S.t); S.msg = { text: 'Away.', sub: `Let go at ${Math.round(S.aimH)}in.` }; return 'release'; }
+    if (S.phase === 'play' && !S.play.end) { S.throwTo = S.throwTo === 'near' ? 'far' : 'near'; return 'throw-' + S.throwTo; }
+    if (S.phase === 'between' && S.t > 0.2) return skipBetween();
+    if (S.phase === 'overEnd' && S.t > 0.3) return startOver();
+    return null;
+  }
+
+  function lockPower() {
+    S.power = AI.livePower(S.t);
+    S.pace = AI.powerVx(S.power);
+    S.runFrom = S.bowler.x;
+    S.d = { vx: S.pace, runup: S.pace >= LOB_VX ? 'long' : 'walk', kind: 'yours' };
+    S.aimH = null;
+    setPhase('runup');
+    S.msg = S.d.runup === 'long'
+      ? { text: `${Math.round(S.pace / 17.6)}mph, off the long run.`, sub: 'Now the height: press as the marker passes it. 44 to 56in hits the board.' }
+      : { text: `${Math.round(S.pace / 17.6)}mph. A lob, walked in.`, sub: `${pron().She} can see this one coming. Press to let it go at the marker.` };
+    return 'pace';
+  }
+
+  function release() {
+    if (S.aimH == null) S.aimH = AI.liveAim(S.t);
+    const d = makeDelivery(S.pace, S.aimH);
+    d.kind = 'yours';
+    S.d = d;
+    S.aiBat = AI.plan(S.cards[S.striker].mind, d, player(S.striker), wideLine(), rng);
   }
 
   function swing() {
@@ -124,6 +169,7 @@ export function createGame(ctx, opts = {}) {
   function isExtra() { return isNoBall() || isWide(); }
 
   function chooseThrowEnd(plan, now) {
+    if (bowling()) return S.throwTo;   // your call
     let best = null, bestMargin = 0;
     for (const end of ['near', 'far']) {
       const r = RUN.runnerFor(S.R, end);
@@ -222,6 +268,14 @@ export function createGame(ctx, opts = {}) {
     }
     const sym = res.wicket ? 'W' : isNoBall() ? 'nb' : isWide() ? 'wd' : res.runs === 0 ? '·' : String(res.runs);
     S.book.push({ sym, wicket: !!res.wicket, extra: !legal, boundary: !!res.boundary });
+    if (bowling() && S.d.tBoard) {
+      if (S.aiBat && !isExtra()) {
+        const s = S.aiBat.surprise, who = pron();
+        const read = s > 0.6 ? `Completely wrong-footed ${who.him}.` : s > 0.33 ? `Not what ${who.she} was looking for.` : `${who.She} was expecting that.`;
+        res.sub = read + (res.sub ? ' ' + res.sub : '');
+      }
+      AI.remember(S.cards[S.striker].mind, S.d);
+    }
     res.signalT0 = S.clock + 0.5;
     res.duration = Math.max(1.9, 0.5 + res.signals.length * 1.1 + 0.3);
     if (res.wicket) {
@@ -233,6 +287,7 @@ export function createGame(ctx, opts = {}) {
 
   function afterBall() {
     const res = S.result;
+    if (S.target && S.total >= S.target) { resetBall(); return endInnings('Target reached.'); }
     // who ends up where
     let ends;
     if (res.resetEnds) {
@@ -251,7 +306,7 @@ export function createGame(ctx, opts = {}) {
       // the vacant end: where the out batter was going, or the striker's end
       let vacant = res.runOutEnd || 'near';
       if (ends[vacant] != null) vacant = vacant === 'near' ? 'far' : 'near';
-      if (S.wkts >= 10 || S.nextIn >= S.home.length) return endInnings('All out.');
+      if (S.wkts >= 10 || S.nextIn >= S.batting.length) return endInnings('All out.');
       const id = S.nextIn++;
       S.cards[id].in = true;
       ends[vacant] = id;
@@ -289,14 +344,14 @@ export function createGame(ctx, opts = {}) {
     S.d = chooseDelivery();
     S.walkers.forEach(w => { if (w.in) w.to = w.id === S.striker ? sxFromFar(STRIKER_POS) : sxFromFar(NONSTRIKER_POS); });
     setPhase('between');
-    S.msg = { text: `${currentBowler().p.name} to bowl.`, sub: currentBowler().p.model.startsWith('W') ? 'Her over.' : 'His over.' };
+    S.msg = { text: `${currentBowler().p.name} to bowl.`, sub: bowling() ? 'Your over: set the pace, then the height.' : currentBowler().p.model.startsWith('W') ? 'Her over.' : 'His over.' };
   }
 
   function resetBall() {
     const hidden = new Set(S.walkers.filter(w => w.in).map(w => w.id));
     S.R = RUN.makeRunners(S.striker, S.nonStriker);
     S.R.runners.forEach(r => { if (hidden.has(r.id)) r.hidden = true; });
-    S.swing = null; S.play = null; S.result = null;
+    S.swing = null; S.play = null; S.result = null; S.aiBat = null; S.aimH = null; S.throwTo = 'near';
     if (!(S.ball && S.ball.mode === 'arc' && S.ball.clock)) S.ball = { mode: 'held' };
     S.hits = { near: -1, far: -1 };
   }
@@ -308,7 +363,7 @@ export function createGame(ctx, opts = {}) {
 
   function skipBetween() {
     S.walkers.forEach(w => { w.x = w.to; });
-    S.bowler.x = MARK[S.d.runup];
+    S.bowler.x = MARK[S.d ? S.d.runup : 'long'];
     S.ball = { mode: 'held' };
     S.t = 9;
   }
@@ -326,36 +381,53 @@ export function createGame(ctx, opts = {}) {
     updateBall(dt);
 
     if (S.phase === 'between') {
-      const mark = MARK[S.d.runup];
+      const mark = MARK[S.d ? S.d.runup : 'long'];
       const b = S.bowler;
       if (Math.abs(b.x - mark) > 1) {
         const dir = Math.sign(mark - b.x);
         b.x += dir * Math.min(WALK * dt, Math.abs(mark - b.x));
         setAnim(b, dir > 0 ? 'walk_e' : 'walk_w');
       } else { b.x = mark; setAnim(b, 'bowl_ready'); }
-      const ready = Math.abs(b.x - mark) <= 1 && S.walkers.every(w => !w.in || w.x === w.to) && S.ball.mode !== 'arc';
+      const ready = Math.abs(b.x - mark) <= 1 && S.walkers.every(w => !w.in || w.x === w.to) && (!S.ball || S.ball.mode !== 'arc');
       if (ready && S.t >= 0.7) {
         S.walkers = S.walkers.filter(w => !w.in);
         S.R.runners.forEach(r => { r.hidden = false; });
+        if (bowling()) {
+          setPhase('aim');
+          const m = S.cards[S.striker].mind;
+          S.msg = { text: 'How hard? Press to set the pace.', sub: `Below the white mark is a lob you walk in. ${player(S.striker).name} is holding the bat at ${Math.round(m.expH)}in.` };
+          return;
+        }
         setPhase('runup');
         S.msg = S.d.runup === 'long'
           ? { text: 'In off the long run.', sub: 'Could be the quick one, could be the slower ball.' }
           : { text: 'Walking in off a few paces.', sub: 'This one is going up in the air.' };
       }
+    } else if (S.phase === 'aim') {
+      S.batH = S.cards[S.striker].mind.expH;
     } else if (S.phase === 'runup') {
-      const len = RUNUP_LEN[S.d.runup];
-      const from = MARK[S.d.runup], u = Math.min(1, S.t / len);
+      const from = bowling() ? S.runFrom : MARK[S.d.runup];
+      // your run-up starts from the long mark whatever the pace: a lob is walked in from there
+      const len = bowling() ? Math.max(RUNUP_LEN[S.d.runup], (REL_SX - from) / (S.d.runup === 'long' ? 78 : 40)) : RUNUP_LEN[S.d.runup];
+      const u = Math.min(1, S.t / len);
+      if (bowling()) { S.batH = S.cards[S.striker].mind.expH; S.aimLive = AI.liveAim(S.t); }
       S.bowler.x = from + (REL_SX - from) * u;
       if (S.t > len - 0.2) setAnim(S.bowler, 'bowl_deliver', S.t > len - 0.1 ? 1 : 0);
       else setAnim(S.bowler, S.d.runup === 'long' ? 'run_e' : 'walk_e');
       if (S.t >= len) {
+        if (bowling()) release();
         setPhase('flight');
         S.bowler.deliverAt = S.clock;
         S.ball = { mode: 'delivery' };
-        S.msg = { text: 'Watch it out of the hand.', sub: 'Bat to the height, then press.' };
+        S.msg = bowling() ? { text: AI.describe(S.d, wideLine()), sub: '&nbsp;' } : { text: 'Watch it out of the hand.', sub: 'Bat to the height, then press.' };
       }
     } else if (S.phase === 'flight') {
       bowlerFollowThrough();
+      if (bowling() && S.aiBat && !S.swing) {
+        const a = S.aiBat;
+        if (a.swing && S.t >= a.t) { S.batH = a.batH; swing(); }
+        else if (!a.swing) S.batH = a.holdH;
+      }
       if (S.t >= S.d.tBoard && !S.swing?.info.contact) {
         // past the bat: bowled, or on to the keeper
         const a = arrival();
@@ -382,6 +454,7 @@ export function createGame(ctx, opts = {}) {
       }
     } else if (S.phase === 'play') {
       bowlerFollowThrough();
+      if (bowling()) AI.run(S.R, S.play, RUN, rng);
       updatePlay(dt);
     } else if (S.phase === 'dead') {
       if (S.result.keeperTook || (S.play && S.play.end === 'near')) keeperReturn();
@@ -503,9 +576,10 @@ export function createGame(ctx, opts = {}) {
     const Pl = S.play, plan = Pl && Pl.plan;
     const t = Pl ? Pl.t : 0;
     // which end the throw is going to
-    if (Pl && Pl.end) {
+    if (Pl && (Pl.end || bowling())) {
       const flash = Math.floor(S.clock * 8) % 2;
-      dot(Pl.end === 'near' ? NEAR_WICKET : FAR_WICKET, flash ? '#e0705a' : '#e7dcc0', 4);
+      const end = Pl.end || S.throwTo;
+      dot(end === 'near' ? NEAR_WICKET : FAR_WICKET, flash || !Pl.end ? '#e0705a' : '#e7dcc0', 4);
     }
     dot(NEAR_WICKET, '#e7dcc0', 2); dot(FAR_WICKET, '#b3a684', 2);
 
@@ -665,12 +739,37 @@ export function createGame(ctx, opts = {}) {
     px(gx, yTop, gw, sy(wideLine()) - yTop, '#5e2a20');
     px(gx, sy(NOBALL_H), gw, yBot - sy(NOBALL_H), '#5e2a20');
     const by = sy(S.batH);
-    px(gx - 4, by - 1, 4, 3, '#caa463');
+    // the bat's height: yours on the left; when you bowl, the batter's on the right
+    px(bowling() ? gx + gw : gx - 4, by - 1, 4, 3, '#caa463');
     px(gx, by, gw, 1, '#caa463');
+    if (bowling()) {
+      // the height marker sweeps during the run-up; where it went once it is away
+      const live = S.phase === 'runup' && S.aimH == null;
+      const h = live ? S.aimLive : S.aimH;
+      if (h != null && ['runup', 'flight', 'keeper', 'play', 'dead'].includes(S.phase)) {
+        const c = live ? '#6f9ab0' : '#e0705a', my = sy(h);
+        px(gx - 5, my - 2, 5, 5, c); px(gx, my, gw, 1, c);
+      }
+      if (S.phase === 'aim' || (S.phase === 'runup' && S.power != null)) drawPowerBar(px);
+      return;
+    }
     if (S.phase === 'flight' || S.phase === 'runup') {
       ctx.fillStyle = 'rgba(232,177,75,.45)';
       for (let x = 150; x < 246; x += 7) ctx.fillRect(x, Math.round(by), 4, 1);
     }
+  }
+
+  function drawPowerBar(px) {
+    const mx = 86, mw = 150, my = 168, mh = 7;
+    px(mx - 1, my - 1, mw + 2, mh + 2, '#2d3c41');
+    px(mx, my, mw, mh, '#141c1e');
+    const lobU = AI.lobU();
+    px(mx, my, mw * lobU, mh, '#5e2a20');
+    px(mx + mw * lobU, my, 1, mh, '#d8e0cc');
+    const locked = S.phase !== 'aim';
+    const u = locked ? S.power : AI.livePower(S.t);
+    px(mx, my + 2, mw * u, mh - 4, locked ? '#4e7044' : '#caa463');
+    px(mx + mw * u - 1, my - 2, 3, mh + 4, locked ? '#e0705a' : '#d8e0cc');
   }
 
   // ------------------------------------------------------------------ tick
@@ -680,7 +779,7 @@ export function createGame(ctx, opts = {}) {
     render();
   }
 
-  return { S, newInnings, press, setBat, tick, render, wideLine, currentBowler, chooseThrowEnd };
+  return { S, newInnings, press, setBat, tick, render, wideLine, currentBowler, chooseThrowEnd, player };
 }
 
 // ---------------------------------------------------------------------------

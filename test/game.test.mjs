@@ -102,3 +102,31 @@ test('the stance at board height is the rest frame', () => {
   assert.equal(swingKey(75), 'bat_swing_high');
   assert.ok(BOARD_LO <= 50 && 50 <= BOARD_HI);
 });
+
+test('bowling: the batter middles what she expects and is beaten by a surprise', async () => {
+  const AI = await import('../src/bowling.js');
+  const p = { model: 'W67' };
+  let seed = 11;
+  const rng = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const tally = (vary) => {
+    let beaten = 0, n = 0;
+    for (let k = 0; k < 400; k++) {
+      const m = AI.newMind(p, 0);
+      for (let b = 0; b < 8; b++) {
+        const d = makeDelivery(vary && b % 2 ? 480 : 700, vary ? (b % 2 ? 45 : 62) : 50);
+        const pl = AI.plan(m, d, p, 73, rng);
+        if (pl.q === undefined || pl.q < AI.BEATEN) beaten++;
+        n++; AI.remember(m, d);
+      }
+    }
+    return beaten / n;
+  };
+  assert.ok(tally(true) > tally(false) + 0.05, `${tally(true)} vs ${tally(false)}`);
+});
+
+test('bowling: a lob is walked in, so it never surprises much', async () => {
+  const AI = await import('../src/bowling.js');
+  const m = AI.newMind({ model: 'W67' }, 0);
+  assert.ok(AI.surprise(m, makeDelivery(260, 50)) <= 0.25);
+  assert.ok(AI.powerVx(0) < 440 && AI.powerVx(1) > 700);
+});

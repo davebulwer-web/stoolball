@@ -54,3 +54,5 @@ export function attack(side) {
 
 export const KEEPER_INDEX = 5;   // Keith Ayling, M67, keeps wicket
 export const UMPIRE = { name: 'Umpire', model: 'UMP', look: null };
+
+export const SIDE_NAMES = { home: 'Your side', away: 'The visitors' };
