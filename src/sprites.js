@@ -126,7 +126,7 @@ export const PROPS = [
 ];
 
 export const ENVIRONMENT = [
-  { key: 'backdrop', w: 320, h: 180, desc: 'Dusk sky, low sun upper left, hedge line, outfield, the pitch strip and both creases. No wickets or people. Probably drawn by hand rather than generated.' },
+  { key: 'backdrop', w: 320, h: 180, desc: 'Dusk sky, low sun on the left, tree line, cottage, outfield. Pixellab pixflux (assets/backdrop.png); the game paints the pitch strip and creases on top. No wickets or people.' },
   { key: 'field_map', w: 112, h: 82, desc: 'Top-down field map in the top-right of the sky: boundary, pitch, fielders, batters and the ball. Drawn in code from dots; nothing to generate.' },
 ];
 

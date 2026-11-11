@@ -12,6 +12,7 @@ import { planShot, chaserAt, FIELDERS, KEEPER_SPOT, BOWLER_SPOT, NEAR_WICKET, FA
 import * as RUN from './running.js';
 import { ANIM, REST_BAND } from './sprites.js';
 import { drawChar, drawBall, drawWicket, guardFrame, swingKey } from './placeholder.js';
+import { backdropArt } from './art.js';
 import { homeSide, awaySide, attack, KEEPER_INDEX } from './teams.js';
 import * as AI from './bowling.js';
 
@@ -788,10 +789,24 @@ const C = {
   sky0: '#2b3f4a', sky1: '#3d5560', sky2: '#55707a', sun: '#e8b14b',
   hedge: '#1f2f22', hedgeHi: '#2a3d2b', grass: '#4e7044', grassHi: '#5c8050', grassLo: '#3e5a36', grassFg: '#355030',
   strip: '#6b7f52', crease: '#d8e0cc',
+  // on the Pixellab backdrop: a mown strip a shade lighter than its dark foreground grass
+  artStrip: '#2f6a40', artStripLo: '#0b4233',
 };
 
 export function drawBackdrop(ctx) {
   const px = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  const art = backdropArt();
+  if (art) {
+    ctx.drawImage(art, 0, 0);
+    px(FAR_SX - 8, GROUND - 1, (BW_SX + 28) - (FAR_SX - 8), 3, C.artStrip);
+    px(FAR_SX - 8, GROUND + 2, (BW_SX + 28) - (FAR_SX - 8), 1, C.artStripLo);
+  } else drawFlatBackdrop(px);
+  px(REL_SX, GROUND - 3, 2, 7, C.crease);
+  px(FAR_SX, GROUND - 3, 2, 7, C.crease);
+  px(BW_SX - 8, GROUND - 2, 2, 5, C.crease);
+}
+
+function drawFlatBackdrop(px) {
   px(0, 0, W, 56, C.sky0); px(0, 56, W, 30, C.sky1); px(0, 86, W, 26, C.sky2);
   px(14, 44, 10, 10, C.sun);
   px(0, 112, W, 8, C.hedge); px(0, 112, W, 2, C.hedgeHi);
@@ -799,7 +814,4 @@ export function drawBackdrop(ctx) {
   px(0, GROUND + 16, W, H, C.grassFg);
   px(FAR_SX - 8, GROUND - 1, (BW_SX + 28) - (FAR_SX - 8), 3, C.strip);
   px(FAR_SX - 8, GROUND + 2, (BW_SX + 28) - (FAR_SX - 8), 1, C.grassLo);
-  px(REL_SX, GROUND - 3, 2, 7, C.crease);
-  px(FAR_SX, GROUND - 3, 2, 7, C.crease);
-  px(BW_SX - 8, GROUND - 2, 2, 5, C.crease);
 }

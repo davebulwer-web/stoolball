@@ -430,7 +430,7 @@ Six: both arms straight up.
 
 | Piece | Size | Notes |
 |---|---|---|
-| `backdrop` | 320x180 | Dusk sky, low sun upper left, hedge line, outfield, the pitch strip and both creases. No wickets or people. Probably drawn by hand rather than generated. |
+| `backdrop` | 320x180 | Dusk sky, low sun on the left, tree line, cottage, outfield. Pixellab pixflux (assets/backdrop.png); the game paints the pitch strip and creases on top. No wickets or people. |
 | `field_map` | 112x82 | Top-down field map in the top-right of the sky: boundary, pitch, fielders, batters and the ball. Drawn in code from dots; nothing to generate. |
 
 ## Frame count by figure

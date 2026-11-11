@@ -15,8 +15,23 @@ const tinted = new Map();   // model|look -> canvas
 
 export function artReady(model) { return !!(index && pixels[model]); }
 
+// Pixellab backdrop (320x180, see docs/backdrop.md). Add ?backdrop=flat to the URL
+// to draw the old hand-coded bands instead.
+let backdrop = null;
+export function backdropArt() { return backdrop; }
+function loadBackdrop() {
+  if (typeof location !== 'undefined' && /[?&]backdrop=flat\b/.test(location.search)) return Promise.resolve();
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => { backdrop = img; res(); };
+    img.onerror = () => res();
+    img.src = 'assets/backdrop.png';
+  });
+}
+
 export function loadArt() {
   if (!HAS_DOM) return Promise.resolve(false);
+  loadBackdrop();
   return fetch(ROOT + 'index.json').then(r => r.ok ? r.json() : null).then(ix => {
     if (!ix) return false;
     return Promise.all(Object.keys(ix.models).map(m => new Promise(res => {
