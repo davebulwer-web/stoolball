@@ -22,7 +22,11 @@ let mode = ['bat', 'bowl', 'match'].includes(params.get('mode')) ? params.get('m
 let match = null;   // a full match: both innings, and the toss
 
 const $ = id => document.getElementById(id);
-function show(id) { for (const s of ['setup', 'match', 'card', 'sheet']) $(s).hidden = s !== id; if (id === 'match') fit(); }
+function show(id) {
+  for (const s of ['setup', 'match', 'card', 'sheet']) $(s).hidden = s !== id;
+  document.body.classList.toggle('playing', id === 'match');
+  if (id === 'match') fit();
+}
 
 // ---------------------------------------------------------------- setup
 const LENGTHS = [
@@ -115,14 +119,32 @@ window.addEventListener('keydown', e => {
   if ($('match').hidden) return;
   if (e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); game.setBat(S.batH + (e.code === 'ArrowUp' ? 4 : -4)); }
   if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyR') { e.preventDefault(); game.press(); }
+  if (e.code === 'KeyF') { e.preventDefault(); toggleFull(); }
 });
 
+// Fill the window with the pitch at a whole number of device pixels per game
+// pixel, so every pixel of the art stays square and sharp. The game itself
+// still draws at W x H; only the canvas's displayed size changes.
 function fit() {
-  const avail = $('stage').clientWidth - 18;
-  const s = Math.max(1, Math.floor(Math.min(avail / W, Math.min(innerHeight * 0.6, 520) / H) * 2) / 2);
-  canvas.style.width = W * s + 'px'; canvas.style.height = H * s + 'px';
+  if ($('match').hidden) return;
+  const dpr = devicePixelRatio || 1, stage = $('stage');
+  canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+  const availW = stage.clientWidth - 16;
+  const otherH = document.querySelector('.wrap').offsetHeight - H;   // everything that isn't the pitch
+  const availH = innerHeight - otherH;
+  const s = Math.max(1, Math.floor(Math.min(availW / W, availH / H) * dpr + 1e-6));
+  canvas.style.width = W * s / dpr + 'px'; canvas.style.height = H * s / dpr + 'px';
 }
 addEventListener('resize', fit);
+document.addEventListener('fullscreenchange', fit);
+// The scoreboard, commentary and over strip can change height as they fill in.
+const refit = new ResizeObserver(fit);
+for (const el of $('match').children) if (el.id !== 'stage') refit.observe(el);
+function toggleFull() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+}
+$('btn-full').onclick = toggleFull;
 
 // ---------------------------------------------------------------- HUD
 let lastHud = '', lastCall = '', lastAct = '', lastBook = '';

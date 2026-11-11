@@ -15,6 +15,8 @@ Batting: move the pointer up and down over the pitch (or Up/Down) to set the bat
 
 Bowling: press once to set the pace off the power bar (left of the white mark is a lob, walked in), then press during the run-up to let it go at the height the marker on the gauge has reached. The tan tick on the gauge is where the batter holds the bat: what they expect. They remember your last few balls, so vary height and pace. While the ball is in the field, press to switch the throw between the keeper's end and your end.
 
+The pitch scales up to fill the window in whole-pixel steps so the art stays sharp (4x in a maximised 1080p browser). **Full screen** (or F) gives 5x on a 1920x1080 display.
+
 `?auto` plays itself (alternating batting and bowling innings), `?mode=bat|bowl|match` picks the mode, `?speed=4` runs faster, `?overs=12` sets the length.
 
 ## The sprite list

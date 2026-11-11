@@ -29,7 +29,15 @@ legend { font: 11px var(--pixel); letter-spacing: .12em; color: var(--amber); pa
 .how b { color: var(--chalk); }
 .hud { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; font: 12px var(--pixel); color: var(--muted); }
 .hud b { color: var(--chalk); font-weight: 400; }
-#stage { display: flex; justify-content: center; background: #080c0d; border: 1px solid var(--rule); border-radius: 3px; padding: 8px; overflow: hidden; }
+body.playing .wrap { max-width: none; padding: 10px 16px; gap: 0; }
+body.playing header { display: none; }
+@media (min-width: 760px) {
+body.playing #match { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+body.playing #match > :not(.book):not(.row) { grid-column: 1 / -1; }
+body.playing #match > .row { justify-content: flex-end; }
+}
+body.playing #match { gap: 8px; }
+#stage { display: flex; align-items: center; justify-content: center; background: #080c0d; border: 1px solid var(--rule); border-radius: 3px; padding: 8px; overflow: hidden; }
 canvas { image-rendering: pixelated; display: block; touch-action: none; cursor: ns-resize; }
 .call { min-height: 3.2em; text-align: center; font: 12px/1.6 var(--pixel); color: var(--amber); }
 .call span { color: var(--muted); }
