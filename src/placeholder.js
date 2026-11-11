@@ -4,6 +4,7 @@
 
 import { ANIM, MODELS, GUARD_BANDS, SWING_GROUPS } from './sprites.js';
 import { PXI } from './geometry.js';
+import { drawArt, artReady } from './art.js';
 
 export const used = new Set();   // "MODEL:anim" pairs the game has drawn
 
@@ -145,6 +146,12 @@ export function drawChar(ctx, model, key, frame, x, ground, look) {
 
   const L = look || defaultLook(model);
   const H = MODELS[model].px;
+
+  // generated sprite if it has loaded, block figure otherwise
+  if (artReady(model)) {
+    rect(ctx, x - H * 0.16, ground, H * 0.32, 2, 'rgba(0,0,0,.3)');
+    if (drawArt(ctx, model, key, frame, x, ground, look)) return;
+  }
   const p = poseFor(key, frame, H);
   const side = anim.facing !== 'south';
   const s = anim.facing === 'west' ? -1 : 1;

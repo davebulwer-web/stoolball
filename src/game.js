@@ -1,4 +1,4 @@
-// A batting innings, on placeholder sprites. You bat; the computer bowls,
+// A batting innings. You bat; the computer bowls,
 // keeps wicket and fields. Overs alternate between women and men bowlers.
 
 import * as GEO from './geometry.js';

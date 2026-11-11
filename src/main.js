@@ -3,6 +3,7 @@ import { W, H, GROUND, PXI, BAT_LO, BAT_HI, ZONE_MID } from './geometry.js';
 import { ballH, ballXW } from './physics.js';
 import { ANIMS, MODELS, PROPS, CANVAS, framesFor } from './sprites.js';
 import { drawChar, drawBall, drawWicket, used } from './placeholder.js';
+import { loadArt } from './art.js';
 import * as RUN from './running.js';
 
 const params = new URLSearchParams(location.search);
@@ -182,6 +183,7 @@ function frame(now) {
 }
 
 window.__stoolball = { S, used, game };
+loadArt();
 paintSetup();
 show('setup');
 if (AUTO) start();

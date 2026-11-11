@@ -136,7 +136,7 @@ export const BASE_PALETTE = {
   shirt: '#e4e8da', shirtLo: '#aeb5a4',
   shorts: '#34425e', shortsLo: '#232c3b',
   skin: '#c08a5e', skinLo: '#94643f',
-  hair: '#20282a', shoes: '#f2f2ea',
+  hair: '#20282a', shoes: '#f2f2ea', shoesLo: '#bdbdb2',
   bat: '#caa463', batLo: '#8f7139', grip: '#b9412f',
   outline: '#000000',
 };

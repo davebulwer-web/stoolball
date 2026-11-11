@@ -1,6 +1,6 @@
 # Stoolball
 
-A side-on pixel stoolball game. This is the innings build on placeholder figures: you bat a full innings against a computer side that bowls, keeps wicket and fields. Every figure is a block placeholder drawn from the sprite manifest, so the game doubles as the specification for the sprite batch.
+A side-on pixel stoolball game: you bat a full innings against a computer side that bowls, keeps wicket and fields. Every figure is drawn from the sprite manifest. The figures are Pixellab sprites (`assets/sprites/`, one sheet per body, palette-swapped per player); the block placeholders still draw until the sheets load.
 
 ## Run it
 
@@ -31,7 +31,12 @@ Controls: move the pointer up and down over the pitch (or Up/Down) to set the ba
 | `src/running.js` | Running between wickets, calls, run-out danger |
 | `src/teams.js` | The two sides and the bowling attack (overs alternate women and men) |
 | `src/game.js` | The innings: phases, the ball in play, keeper, bowler, umpire, scoring |
-| `src/placeholder.js` | Block-figure placeholders for every animation frame |
+| `src/art.js` | Loads the sprite sheets and palette-swaps clothes, skin and hair per player |
+| `src/placeholder.js` | Draws a frame: the sprite if loaded, else the block-figure placeholder |
 | `src/main.js` | Page, input, scoreboard, sprite sheet, autopilot |
 
 Tests: `node --test test/*.test.mjs`.
+
+## Sprites
+
+`assets/sprites/{W62,W67,M67,M73,UMP}.png` hold one row per animation and one 64x64 cell per frame, feet on (32, 63); `index.json` maps animation keys to rows. They were generated with Pixellab: a base sprite per figure and facing, then each animation posed from it with skeleton animation (skeletons taken from the placeholder poses), then repainted so each base colour (`BASE_PALETTE` in `src/sprites.js`) means one body part.

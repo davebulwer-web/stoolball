@@ -1,0 +1,411 @@
+{
+ "cell": 64,
+ "anchor": [
+  32,
+  63
+ ],
+ "models": {
+  "W62": {
+   "bat_guard": {
+    "row": 0,
+    "frames": 7
+   },
+   "bat_swing_low": {
+    "row": 1,
+    "frames": 3
+   },
+   "bat_swing_mid": {
+    "row": 2,
+    "frames": 3
+   },
+   "bat_swing_high": {
+    "row": 3,
+    "frames": 3
+   },
+   "bat_out": {
+    "row": 4,
+    "frames": 1
+   },
+   "ns_idle": {
+    "row": 5,
+    "frames": 1
+   },
+   "ns_backup": {
+    "row": 6,
+    "frames": 1
+   },
+   "run_bat_e": {
+    "row": 7,
+    "frames": 8
+   },
+   "run_bat_w": {
+    "row": 8,
+    "frames": 8
+   },
+   "ground_bat_e": {
+    "row": 9,
+    "frames": 2
+   },
+   "ground_bat_w": {
+    "row": 10,
+    "frames": 2
+   },
+   "walk_bat_e": {
+    "row": 11,
+    "frames": 6
+   },
+   "walk_bat_w": {
+    "row": 12,
+    "frames": 6
+   },
+   "bowl_ready": {
+    "row": 13,
+    "frames": 1
+   },
+   "run_e": {
+    "row": 14,
+    "frames": 8
+   },
+   "run_w": {
+    "row": 15,
+    "frames": 8
+   },
+   "walk_e": {
+    "row": 16,
+    "frames": 6
+   },
+   "walk_w": {
+    "row": 17,
+    "frames": 6
+   },
+   "bowl_deliver": {
+    "row": 18,
+    "frames": 4
+   },
+   "field_receive": {
+    "row": 19,
+    "frames": 2
+   },
+   "field_break": {
+    "row": 20,
+    "frames": 2
+   },
+   "celebrate": {
+    "row": 21,
+    "frames": 2
+   }
+  },
+  "W67": {
+   "bat_guard": {
+    "row": 0,
+    "frames": 7
+   },
+   "bat_swing_low": {
+    "row": 1,
+    "frames": 3
+   },
+   "bat_swing_mid": {
+    "row": 2,
+    "frames": 3
+   },
+   "bat_swing_high": {
+    "row": 3,
+    "frames": 3
+   },
+   "bat_out": {
+    "row": 4,
+    "frames": 1
+   },
+   "ns_idle": {
+    "row": 5,
+    "frames": 1
+   },
+   "ns_backup": {
+    "row": 6,
+    "frames": 1
+   },
+   "run_bat_e": {
+    "row": 7,
+    "frames": 8
+   },
+   "run_bat_w": {
+    "row": 8,
+    "frames": 8
+   },
+   "ground_bat_e": {
+    "row": 9,
+    "frames": 2
+   },
+   "ground_bat_w": {
+    "row": 10,
+    "frames": 2
+   },
+   "walk_bat_e": {
+    "row": 11,
+    "frames": 6
+   },
+   "walk_bat_w": {
+    "row": 12,
+    "frames": 6
+   },
+   "bowl_ready": {
+    "row": 13,
+    "frames": 1
+   },
+   "run_e": {
+    "row": 14,
+    "frames": 8
+   },
+   "run_w": {
+    "row": 15,
+    "frames": 8
+   },
+   "walk_e": {
+    "row": 16,
+    "frames": 6
+   },
+   "walk_w": {
+    "row": 17,
+    "frames": 6
+   },
+   "bowl_deliver": {
+    "row": 18,
+    "frames": 4
+   },
+   "field_receive": {
+    "row": 19,
+    "frames": 2
+   },
+   "field_break": {
+    "row": 20,
+    "frames": 2
+   },
+   "celebrate": {
+    "row": 21,
+    "frames": 2
+   }
+  },
+  "M67": {
+   "bat_guard": {
+    "row": 0,
+    "frames": 7
+   },
+   "bat_swing_low": {
+    "row": 1,
+    "frames": 3
+   },
+   "bat_swing_mid": {
+    "row": 2,
+    "frames": 3
+   },
+   "bat_swing_high": {
+    "row": 3,
+    "frames": 3
+   },
+   "bat_out": {
+    "row": 4,
+    "frames": 1
+   },
+   "ns_idle": {
+    "row": 5,
+    "frames": 1
+   },
+   "ns_backup": {
+    "row": 6,
+    "frames": 1
+   },
+   "run_bat_e": {
+    "row": 7,
+    "frames": 8
+   },
+   "run_bat_w": {
+    "row": 8,
+    "frames": 8
+   },
+   "ground_bat_e": {
+    "row": 9,
+    "frames": 2
+   },
+   "ground_bat_w": {
+    "row": 10,
+    "frames": 2
+   },
+   "walk_bat_e": {
+    "row": 11,
+    "frames": 6
+   },
+   "walk_bat_w": {
+    "row": 12,
+    "frames": 6
+   },
+   "bowl_ready": {
+    "row": 13,
+    "frames": 1
+   },
+   "run_e": {
+    "row": 14,
+    "frames": 8
+   },
+   "run_w": {
+    "row": 15,
+    "frames": 8
+   },
+   "walk_e": {
+    "row": 16,
+    "frames": 6
+   },
+   "walk_w": {
+    "row": 17,
+    "frames": 6
+   },
+   "bowl_deliver": {
+    "row": 18,
+    "frames": 4
+   },
+   "field_receive": {
+    "row": 19,
+    "frames": 2
+   },
+   "field_break": {
+    "row": 20,
+    "frames": 2
+   },
+   "celebrate": {
+    "row": 21,
+    "frames": 2
+   },
+   "keep_ready": {
+    "row": 22,
+    "frames": 1
+   },
+   "keep_take": {
+    "row": 23,
+    "frames": 2
+   },
+   "keep_return": {
+    "row": 24,
+    "frames": 3
+   },
+   "keep_pickup": {
+    "row": 25,
+    "frames": 2
+   }
+  },
+  "M73": {
+   "bat_guard": {
+    "row": 0,
+    "frames": 7
+   },
+   "bat_swing_low": {
+    "row": 1,
+    "frames": 3
+   },
+   "bat_swing_mid": {
+    "row": 2,
+    "frames": 3
+   },
+   "bat_swing_high": {
+    "row": 3,
+    "frames": 3
+   },
+   "bat_out": {
+    "row": 4,
+    "frames": 1
+   },
+   "ns_idle": {
+    "row": 5,
+    "frames": 1
+   },
+   "ns_backup": {
+    "row": 6,
+    "frames": 1
+   },
+   "run_bat_e": {
+    "row": 7,
+    "frames": 8
+   },
+   "run_bat_w": {
+    "row": 8,
+    "frames": 8
+   },
+   "ground_bat_e": {
+    "row": 9,
+    "frames": 2
+   },
+   "ground_bat_w": {
+    "row": 10,
+    "frames": 2
+   },
+   "walk_bat_e": {
+    "row": 11,
+    "frames": 6
+   },
+   "walk_bat_w": {
+    "row": 12,
+    "frames": 6
+   },
+   "bowl_ready": {
+    "row": 13,
+    "frames": 1
+   },
+   "run_e": {
+    "row": 14,
+    "frames": 8
+   },
+   "run_w": {
+    "row": 15,
+    "frames": 8
+   },
+   "walk_e": {
+    "row": 16,
+    "frames": 6
+   },
+   "walk_w": {
+    "row": 17,
+    "frames": 6
+   },
+   "bowl_deliver": {
+    "row": 18,
+    "frames": 4
+   },
+   "field_receive": {
+    "row": 19,
+    "frames": 2
+   },
+   "field_break": {
+    "row": 20,
+    "frames": 2
+   },
+   "celebrate": {
+    "row": 21,
+    "frames": 2
+   }
+  },
+  "UMP": {
+   "ump_idle": {
+    "row": 0,
+    "frames": 1
+   },
+   "ump_out": {
+    "row": 1,
+    "frames": 1
+   },
+   "ump_wide": {
+    "row": 2,
+    "frames": 1
+   },
+   "ump_noball": {
+    "row": 3,
+    "frames": 1
+   },
+   "ump_four": {
+    "row": 4,
+    "frames": 2
+   },
+   "ump_six": {
+    "row": 5,
+    "frames": 1
+   }
+  }
+ }
+}
