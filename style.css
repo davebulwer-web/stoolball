@@ -68,3 +68,12 @@ td:first-child { color: var(--chalk); }
 .sheet-anim .name { font: 12px var(--pixel); color: var(--chalk); }
 .sheet-anim .meta { font-size: 12.5px; color: var(--muted); }
 .sheet-anim canvas { margin-top: 4px; background: #2a3a3f; cursor: default; max-width: 100%; }
+body.titled .wrap { max-width: none; min-height: 100vh; padding: 16px; justify-content: center; }
+body.titled header { display: none; }
+#title { align-items: center; gap: 14px; }
+.title-go { padding: 0; border: 1px solid var(--rule); border-radius: 3px; background: #080c0d; line-height: 0; }
+.title-go:hover { border-color: var(--amber); }
+.title-go img { image-rendering: pixelated; display: block; }
+.press { margin: 0; font: 12px var(--pixel); letter-spacing: .16em; text-transform: uppercase; color: var(--amber); animation: blink 1.2s steps(2, start) infinite; }
+@keyframes blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .press { animation: none; } }

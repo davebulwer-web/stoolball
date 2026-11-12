@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stoolball</title>
+<meta name="description" content="Stoolball, the old Sussex bat-and-ball game, in pixel art. Bat an innings, bowl at a village side, or play the whole match on a summer evening.">
+<meta property="og:title" content="Stoolball">
+<meta property="og:description" content="The old Sussex bat-and-ball game in pixel art. Bat, bowl, or play the whole match on a summer evening.">
+<meta property="og:image" content="assets/title.png">
+<meta name="theme-color" content="#10171a">
+<link rel="icon" type="image/png" href="assets/icon.png">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,8 +17,15 @@
   <header>
     <div class="sub">SUSSEX &middot; MIXED LEAGUE &middot; TUESDAY EVENING</div>
     <h1>Stool<em>ball</em></h1>
-    <p class="tagline">A village evening, side on. Bat an innings, bowl one at them, or play the whole match. Every figure is drawn from the sprite list, in Pixellab sprites recoloured per player.</p>
+    <p class="tagline">A village evening, side on. Bat an innings, bowl one at them, or play the whole match.</p>
   </header>
+
+  <section id="title" hidden>
+    <button id="title-go" class="title-go" type="button" aria-label="Start">
+      <img id="title-art" src="assets/title.png" width="320" height="180" alt="Stoolball: a paddle bat and ball in the grass by the wicket board, at sunset">
+    </button>
+    <p class="press">Click, tap or press Space</p>
+  </section>
 
   <section id="setup">
     <fieldset>
@@ -26,7 +39,7 @@
     <div class="how" id="how"></div>
     <div class="row">
       <button id="btn-start" class="primary" type="button">Play</button>
-      <button id="btn-sheet" type="button">Sprite list</button>
+      <button id="btn-sheet" type="button" hidden>Sprite list</button>
     </div>
   </section>
 

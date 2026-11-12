@@ -17,13 +17,13 @@ Bowling: press once to set the pace off the power bar (left of the white mark is
 
 The pitch scales up to fill the window in whole-pixel steps so the art stays sharp (4x in a maximised 1080p browser). **Full screen** (or F) gives 5x on a 1920x1080 display.
 
-`?auto` plays itself (alternating batting and bowling innings), `?mode=bat|bowl|match` picks the mode, `?speed=4` runs faster, `?overs=12` sets the length.
+The game opens on a title screen (`assets/title.png`, Pixellab art with the title painted on; see `docs/title.md`). `?dev` shows the Sprite list button on the start screen. `?auto` plays itself (alternating batting and bowling innings), `?mode=bat|bowl|match` picks the mode, `?speed=4` runs faster, `?overs=12` sets the length.
 
 ## The sprite list
 
 - `src/sprites.js` is the manifest: every figure, animation, frame, facing and size.
 - `docs/sprite-list.md` is generated from it: `node tools/sprite-list.mjs`.
-- The **Sprite list** button on the start screen shows every placeholder frame.
+- The **Sprite list** button on the start screen (with `?dev`) shows every placeholder frame.
 - `node tools/check-sprites.cjs 300` (with the server running and Playwright installed) plays innings on autopilot and fails if anything on the list is never drawn, or anything drawn is not on the list.
 
 ## Layout
@@ -45,3 +45,7 @@ Tests: `node --test test/*.test.mjs`.
 ## Sprites
 
 `assets/sprites/{W62,W67,M67,M73,UMP}.png` hold one row per animation and one 64x64 cell per frame, feet on (32, 63); `index.json` maps animation keys to rows. They were generated with Pixellab: a base sprite per figure and facing, then each animation posed from it with skeleton animation (skeletons taken from the placeholder poses), then repainted so each base colour (`BASE_PALETTE` in `src/sprites.js`) means one body part.
+
+## Publishing
+
+The site is static: upload `index.html`, `style.css`, `src/` and `assets/` to any web host, keeping the folder layout. It must be served over http(s), not opened as a file, because the scripts are ES modules. `node tools/package.mjs` builds `dist/stoolball-web.zip` with just those files.

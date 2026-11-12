@@ -23,9 +23,11 @@ let match = null;   // a full match: both innings, and the toss
 
 const $ = id => document.getElementById(id);
 function show(id) {
-  for (const s of ['setup', 'match', 'card', 'sheet']) $(s).hidden = s !== id;
+  for (const s of ['title', 'setup', 'match', 'card', 'sheet']) $(s).hidden = s !== id;
   document.body.classList.toggle('playing', id === 'match');
+  document.body.classList.toggle('titled', id === 'title');
   if (id === 'match') fit();
+  if (id === 'title') fitTitle();
 }
 
 // ---------------------------------------------------------------- setup
@@ -302,9 +304,27 @@ function frame(now) {
   paint();
 }
 
+// ---------------------------------------------------------------- title
+// The title art scales like the pitch, in whole-pixel steps.
+function fitTitle() {
+  if ($('title').hidden) return;
+  const img = $('title-art'), dpr = devicePixelRatio || 1;
+  const s = Math.max(1, Math.floor(Math.min((innerWidth - 32) / W, (innerHeight - 80) / H) * dpr + 1e-6));
+  img.style.width = W * s / dpr + 'px'; img.style.height = H * s / dpr + 'px';
+}
+addEventListener('resize', fitTitle);
+$('title-go').onclick = () => show('setup');
+window.addEventListener('keydown', e => {
+  if ($('title').hidden || !['Space', 'Enter'].includes(e.code)) return;
+  e.preventDefault(); show('setup');
+});
+
+// the sprite list is a development view: ?dev shows its button
+if (params.has('dev')) $('btn-sheet').hidden = false;
+
 window.__stoolball = { S, used, game };
 loadArt();
 paintSetup();
-show('setup');
+show(AUTO || params.has('mode') ? 'setup' : 'title');
 if (AUTO) start();
 requestAnimationFrame(frame);
